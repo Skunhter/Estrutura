@@ -1,174 +1,157 @@
 #include <iostream>
 using namespace std;
-#define MAXTAM 20
 
-/*
-    TADS LISTA EST�TICA
-*/
-struct Lista{
-    char vetor[MAXTAM];
-    int ultimo;
+struct No{
+    char info;
+    No *eloP, *eloA;
 };
 
-// lista => lista a ser inicializada
-void inicializar(Lista &lista){
-    lista.ultimo = -1;
+struct LDE{
+    No *comeco;
+    No *fim;
+};
+
+void inicializarLDE(LDE &lista){
+    lista.comeco = NULL;
+    lista.fim = NULL;
 }
 
-// lista => lista a ser manipulada
-// valor => valor a ser armazenado na lista
-// ordem => ordem da inser��o: ''- sem ordem // 'C'-cresc // 'D'-descr
-// Retorna true (inser��o OK) ou false (inser��o falhou)
-bool inserir(Lista &lista, char valor, char ordem=' '){
-    int pos;
-    if( lista.ultimo == MAXTAM-1 ) return false;
+void mostrarLDE(LDE lista, char ordem= ' '){
 
-    switch(ordem){
-        case 'C':
-            pos=0;
-            while( pos <= lista.ultimo && valor > lista.vetor[pos]) pos++;
-            lista.ultimo++;
-            for( int i=lista.ultimo; i>pos; i-- )
-                lista.vetor[i] = lista.vetor[i-1];
-            lista.vetor[pos] = valor;
-            break;
-        case 'D':
-            pos=0;
-            while( pos <= lista.ultimo && valor < lista.vetor[pos]) pos++;
-            lista.ultimo++;
-            for( int i=lista.ultimo; i>pos; i-- )
-                lista.vetor[i] = lista.vetor[i-1];
-            lista.vetor[pos] = valor;
-            break;
-        default:
-            lista.ultimo++;
-            lista.vetor[lista.ultimo] = valor;
-            break;
+    if (ordem == ' ' || ordem == 'C') {
+       No *aux = lista.comeco;
+       while( aux != NULL ){
+           cout << aux->info << " ";
+           aux = aux->eloP;
+       }
+    } else if (ordem == 'D') {
+       No *aux = lista.comeco;
+       while( aux != NULL ){
+           cout << aux->info << " ";
+           aux = aux->eloA;
+       }
     }
+}
+
+bool inserirLDE(LDE &lista, char valor){
+    No *novo;
+    No *aux = lista.comeco;
+
+    // Criar o novo no
+    novo = new No;
+    if( novo == NULL ) return false;
+    novo->info = valor;
+    novo->eloP = NULL;
+    novo->eloA = NULL;
+
+    // Lista vazia
+    if( lista.comeco == NULL ){
+        lista.comeco = novo;
+        lista.fim = novo;
+        return true;
+    }
+
+
+
+    // Inser��o no comeco
+    if( valor <= lista.comeco->info ){
+        novo->eloP = lista.comeco;
+        lista.comeco->eloA = novo;
+        lista.comeco = novo;
+        return true;
+    }
+
+    // Inser��o no final
+    if( valor >= lista.fim->info ){
+       lista.fim->eloP = novo;
+       novo->eloA = lista.fim;
+       lista.fim = novo;
+       return true;
+    }
+
+
+    // Inserir no meio
+
+    while ( aux->info < valor && valor > aux->eloP->info ) {
+        aux = aux->eloP;
+    }
+    novo->eloA = aux;
+    novo->eloP = aux->eloP;
+    aux->eloP = novo;
+    aux->eloP->eloA = novo;
     return true;
 }
 
-// lista => lista a ser usada na pesquisa
-// valor => valor a ser procurado
-// retorna a posi��o do valor ou -1 se n�o achou
-int pesquisar(Lista lista, char valor, char ordem = ' '){
-    switch (ordem) {
-        case 'F':
-            for (int i = lista.ultimo; i >= 0; i--) {
-            if (lista.vetor[i] == valor) return i;
-            }
-            break;
-        default:
-            for (int i = 0; i <= lista.ultimo; i++) {
-            if (lista.vetor[i] == valor) return i;
-            }
-    }
-    return - 1;
+ No * pesquisarLDE (LDE &lista, char valor) {
+   No *aux = lista.comeco;
+
+   while (aux != NULL) {
+       if (aux->info == valor) return aux;
+       aux = aux->eloP;
+   }
+
+   return NULL;
 }
 
-// lista => lista a ser usada na retirada
-// valor => valor a ser retirado
-// retorna true (retirada ok) ou false (retirada falhou)
-bool retirar(Lista &lista, char valor , char ordem = ' '){
-    int pos;
-    if (ordem == 'F') {
-        pos = pesquisar(lista, valor, ordem);
+bool retirarLDE(LDE &lista, char valor) {
+    No *aux = lista.comeco;
+
+    while (aux != NULL && aux->info != valor) {
+        aux = aux->eloP;
+    }
+
+    if (aux == NULL) return false;
+
+    if (aux == lista.comeco) {
+        lista.comeco = lista.comeco->eloP;
+        lista.comeco->eloA = NULL;
+        if (aux == lista.fim) lista.fim = NULL;
     } else {
-        pos = pesquisar(lista, valor);
+        aux->eloA = aux->eloP;
+        aux->eloP = aux->eloA;
+        if (aux == lista.fim) lista.fim = aux->eloA;
     }
-    
-    if (pos == -1) {
-        return false;
-    } else {
-        for(int i = pos; i <= lista.ultimo; i++) {
-            lista.vetor[i] = lista.vetor[i + 1];
-        }
-    }
-    lista.ultimo--;
-    return true;
-}
-
-bool duplicar(Lista &novaLista, Lista lista) {
-    for (int i = 0; i <= lista.ultimo; i++) {
-        inserir(novaLista, lista.vetor[i]);
-    } 
-    return true;
-}
-
-void retirarRepetido(Lista &lista) { 
-
-    for (int i = 0; i < lista.ultimo; i++) {
-        while (pesquisar(lista, lista.vetor[i]) != pesquisar(lista, lista.vetor[i], 'F')) {
-            retirar(lista, lista.vetor[i], 'F');
-        }
-    }
-   
-}
-
-
-
-bool juntarListas(Lista &novaLista, Lista l1, Lista l2) {
-    if (l1.ultimo + l2.ultimo > 20) {
-        return false;
-    } else {
-        for (int i = 0; i <= l1.ultimo; i++) {
-            inserir(novaLista, l1.vetor[i]);
-    }   for (int i = 0; i <= l2.ultimo; i++) {
-            inserir(novaLista, l2.vetor[i]);
-    }
-    }
+    delete aux;
     return true;
 }
 
 
-// Mostrar a lista na tela
-void mostrar(Lista lista){
-    for( int i=0; i<=lista.ultimo; i++ )
-        cout << lista.vetor[i] << "\t";
+
+void liberarLDE(LDE &lista){
+    No *aux = lista.comeco;
+    No *aux2;
+
+    while( aux != NULL ){
+        aux2 = aux->eloP;
+        delete aux;
+        aux = aux2;
+    }
 }
-/*
-    FIM TADS
-*/
 
 int main(){
-    Lista l1;
-    Lista l2;
-    Lista l3;
+    LDE lista1;
 
-    inicializar(l1);
-    inicializar(l2);
-    inicializar(l3);
-    inserir(l1, 'P', 'D');
-    inserir(l1, 'E', 'D');
-    inserir(l1, 'R', 'D');
-    inserir(l1, 'N', 'D');
-    inserir(l1, 'A', 'D');
-    inserir(l1, 'M', 'D');
-    inserir(l2, 'A', 'D');
-    inserir(l2, 'R', 'D');
-    inserir(l2, 'R', 'D');
-    inserir(l2, 'R', 'D');
-    inserir(l2, 'A', 'D');
-    inserir(l2, 'M', 'D');
-    int i = pesquisar(l1, 'M');
-    cout << i << endl;
-    retirar(l1, 'P');
+    inicializarLDE(lista1);
 
-    juntarListas(l3, l1, l2);
-    
+    inserirLDE(lista1, 'C');
+    inserirLDE(lista1, 'B');
+    inserirLDE(lista1, 'A');
+    inserirLDE(lista1, 'C');
+    inserirLDE(lista1, 'D');
+    inserirLDE(lista1, 'A');
+    inserirLDE(lista1, 'B');
+    inserirLDE(lista1, 'U');
+    inserirLDE(lista1, 'C');
+    inserirLDE(lista1, 'O');
+
+    retirarLDE(lista1, 'A');
+    retirarLDE(lista1, 'A');
+
 
     cout << endl << "Lista 1: ";
-    mostrar(l1);
+    mostrarLDE(lista1);
 
-    cout << endl << "Lista duplicada: ";
-    mostrar(l2);
+    liberarLDE(lista1);
 
-    cout << endl << "Lista juntada: ";
-    mostrar(l3);
-
-    retirarRepetido(l3);
-
-    cout << endl << "Lista sem repetir: ";
-    mostrar(l3);
-
+    cout << endl;
 }

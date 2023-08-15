@@ -1,0 +1,331 @@
+#include <iostream>
+using namespace std;
+
+template <typename T>
+struct No{
+    T info;
+    No *eloA, *eloP;
+};
+
+template <typename T>
+struct LDE{
+    No <T> *comeco;
+    No <T> *fim;
+};
+
+//
+// Inicializa a lista dada por par�metro
+//
+template <typename T>
+void inicializarLDE(LDE <T> &lista){
+    lista.comeco = NULL;
+    lista.fim = NULL;
+}
+
+//
+// Mostra todo o conte�do da lista na tela
+//
+template <typename T>
+void mostrarLDE(LDE <T> lista, char ordem='C'){
+    No <T> *aux;
+
+    aux = (ordem == 'C') ? lista.comeco : lista.fim;
+    while( aux != NULL ){
+        cout << aux->info << " ";
+        aux = (ordem == 'C') ? aux->eloP : aux->eloA;
+    }
+    if( lista.comeco == NULL ) cout << "<Vazio>";
+}
+
+//
+// Insere o valor na lista dada respeitando a ordem crescente
+//
+template <typename T>
+bool inserirLDE(LDE <T> &lista, T valor){
+    No <T> *novo;
+
+    // Criar o novo no
+    novo = new No<T>;
+    if( novo == NULL ) return false;
+    novo->info = valor;
+    novo->eloA = NULL;
+    novo->eloP = NULL;
+
+    // Lista vazia
+    if( lista.comeco == NULL ){
+        lista.comeco = novo;
+        lista.fim = novo;
+        return true;
+    }
+
+    // Inser��o no comeco
+    if( valor <= lista.comeco->info ){
+        novo->eloP = lista.comeco;
+        lista.comeco->eloA = novo;
+        lista.comeco = novo;
+        return true;
+    }
+
+    // Inser��o no final
+    if( valor >= lista.fim->info ){
+        lista.fim->eloP = novo;
+        novo->eloA = lista.fim;
+        lista.fim = novo;
+        return true;
+    }
+
+    // Inserir no meio
+    No <T> *ant = lista.comeco;
+    while( ant->info < valor && ant->eloP->info <= valor )
+        ant = ant->eloP;
+    No <T> *prox = ant->eloP;
+
+    novo->eloA = ant;
+    novo->eloP = prox;
+    ant->eloP = novo;
+    prox->eloA = novo;
+    return true;
+}
+
+//
+// Insere o valor dado sempre no final da lista
+//
+template <typename T>
+bool inserirFinalLDE(LDE <T> &lista, T valor){
+    No <T> *novo;
+
+    // Criar o novo no
+    novo = new No<T>;
+    if( novo == NULL ) return false;
+    novo->info = valor;
+    novo->eloA = NULL;
+    novo->eloP = NULL;
+
+    // Lista vazia
+    if( lista.comeco == NULL ){
+        lista.comeco = novo;
+        lista.fim = novo;
+        return true;
+    }
+
+    lista.fim->eloP = novo;
+    novo->eloA = lista.fim;
+    lista.fim = novo;
+    return true;
+}
+
+//
+// Pesquisar se o valor est� na lista
+// retornar o endere�o do valor ou nulo se n�o estiver
+//
+template <typename T>
+No <T> * pesquisarLDE(LDE <T> lista, T valor){
+    No <T> *aux = lista.comeco;
+
+    while( aux != NULL ){
+        if( aux->info == valor ) return aux;
+        aux = aux->eloP;
+    }
+    return NULL;
+}
+
+//
+// Retirar o valor da lista
+// retornar verdadeiro ou false se n�o achar
+//
+template <typename T>
+bool retirarLDE(LDE <T> &lista, T valor ){
+    No <T> *aux, *anterior, *proximo;
+
+    aux = pesquisarLDE(lista, valor);
+
+    if( aux == NULL ) return false;
+    anterior = aux->eloA;
+    proximo = aux->eloP;
+
+
+    if( aux == lista.comeco ){ // Casos 1 e 2
+        lista.comeco = proximo;
+        if( aux == lista.fim ) lista.fim = NULL;
+        else proximo->eloA = NULL;
+    } else { // Casos 3 e 4
+        anterior->eloP = aux->eloP;
+        if( aux == lista.fim ) lista.fim = anterior;
+        else proximo->eloA = anterior;
+    }
+    delete aux;
+    return true;
+}
+
+//
+// Libera toda a mem�ria alocada para a lista fornecida
+//
+template <typename T>
+void liberarLDE(LDE <T> &lista){
+    No <T> *aux = lista.comeco;
+    No <T> *aux2;
+
+    while( aux != NULL ){
+        aux2 = aux->eloP;
+        delete aux;
+        aux = aux2;
+    }
+}
+
+
+
+template <typename T>
+int comprimento(LDE <T> lista) {
+    No <T> *aux = lista.comeco;
+    int comp = 0;
+    while( aux != NULL ){
+        comp++;
+        aux = aux->eloP;
+    }
+    return comp;
+}
+
+template <typename T>
+bool igual(LDE <T> lista1, LDE <T> lista2) {
+    No <T> *aux1 = lista1.comeco;
+    No <T> *aux2 = lista2.comeco;
+
+    if (comprimento(lista1) != comprimento(lista2)) return false;
+
+    while( aux1 != NULL && aux2 != NULL ){
+        if (aux1->info != aux2->info) return false;
+        aux1 = aux1->eloP;
+        aux2 = aux2->eloP;
+  }
+    return true;
+}
+
+template <typename T>
+void copiar(LDE <T> lista1, LDE <T> &lista2) {
+    No <T> *aux = lista1.comeco;
+
+    while (aux != NULL) {
+        inserirFinalLDE(lista2, aux->info);
+        aux = aux->eloP;
+    }
+}
+
+template <typename T>
+void diferenca(LDE <T> lista1, LDE <T> lista2, LDE <T> &lista3) {
+    No <T> *aux1 = lista1.comeco;
+    No <T> *aux2 = lista2.comeco;
+
+    inicializarLDE(lista3);
+    copiar(lista1, lista3);
+
+    while( aux1 != NULL && aux2 != NULL ){
+        if (aux1->info == aux2->info) {
+            retirarLDE(lista3, aux1->info);
+
+           }
+        aux1 = aux1->eloP;
+        aux2 = aux2->eloP;
+
+    }
+}
+
+
+
+
+
+int main(){
+    LDE <char> lista1;
+    LDE <char> lista2;
+    LDE <char> lista3;
+    LDE <char> lista4;
+
+    inicializarLDE(lista1);
+    inicializarLDE(lista2);
+    inicializarLDE(lista3);
+    inicializarLDE(lista4);
+
+    inserirLDE(lista1, 'P');
+    inserirLDE(lista1, 'E');
+    inserirLDE(lista1, 'R');
+    inserirLDE(lista1, 'N');
+    inserirLDE(lista1, 'A');
+    inserirLDE(lista1, 'M');
+    inserirLDE(lista1, 'B');
+    inserirLDE(lista1, 'U');
+    inserirLDE(lista1, 'C');
+    inserirLDE(lista1, 'O');
+
+    inserirLDE(lista2, 'P');
+    inserirLDE(lista2, 'E');
+    inserirLDE(lista2, 'R');
+    inserirLDE(lista2, 'N');
+    inserirLDE(lista2, 'A');
+    inserirLDE(lista2, 'M');
+    inserirLDE(lista2, 'B');
+    inserirLDE(lista2, 'U');
+    inserirLDE(lista2, 'C');
+    inserirLDE(lista2, 'O');
+
+    inserirLDE(lista3, 'B');
+    inserirLDE(lista3, 'C');
+    inserirLDE(lista3, 'E');
+    inserirLDE(lista3, 'N');
+    inserirLDE(lista3, 'A');
+    inserirLDE(lista3, 'M');
+
+
+    if (igual(lista1, lista2)) {
+        cout << "A lista 1 e a 2 sao iguais" << endl;
+    } else {
+        cout << "A lista 1 e a 2 sao diferentes" << endl;
+    }
+
+    if (igual(lista1, lista3)) {
+        cout << "A lista 1 e a 3 sao iguais" << endl;
+    } else {
+        cout << "A lista 1 e a 3 sao diferentes" << endl;
+    }
+
+
+
+    diferenca(lista1, lista3, lista4);
+
+    cout << endl << "Lista 1 - Lista 3: ";
+    mostrarLDE(lista4);
+    cout << endl;
+
+    cout << endl << "Lista 1 (C): ";
+    mostrarLDE(lista1);
+    cout << "\n" << comprimento(lista1) << endl;
+    cout << endl << "Lista 1 (D): ";
+    mostrarLDE(lista1, 'D');
+
+    cout << endl;
+    No <char> *aux = pesquisarLDE(lista1, 'M');
+    if( aux == NULL )
+        cout << "Informacao nao localizada";
+    else
+        cout << "Informacao esta na lista";
+
+    retirarLDE(lista1, 'A');
+    retirarLDE(lista1, 'U');
+    retirarLDE(lista1, 'N');
+    retirarLDE(lista1, 'E');
+    retirarLDE(lista1, 'R');
+    retirarLDE(lista1, 'O');
+
+    cout << endl << "Lista 1: ";
+    mostrarLDE(lista1);
+
+    retirarLDE(lista1, 'B');
+    retirarLDE(lista1, 'C');
+    retirarLDE(lista1, 'M');
+    retirarLDE(lista1, 'P');
+
+    cout << endl << "Lista 1: ";
+    mostrarLDE(lista1);
+
+    liberarLDE(lista1);
+
+    cout << endl;
+}

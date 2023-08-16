@@ -190,15 +190,14 @@ bool igual(LDE <T> lista1, LDE <T> lista2) {
     No <T> *aux1 = lista1.comeco;
     No <T> *aux2 = lista2.comeco;
 
-    if (comprimento(lista1) != comprimento(lista2)) return false;
-
     while( aux1 != NULL && aux2 != NULL ){
         if (aux1->info != aux2->info) return false;
         aux1 = aux1->eloP;
         aux2 = aux2->eloP;
   }
-    return true;
+    return (aux1 == NULL && aux2 == NULL) ? true : false;
 }
+
 
 template <typename T>
 void copiar(LDE <T> lista1, LDE <T> &lista2) {
@@ -212,23 +211,28 @@ void copiar(LDE <T> lista1, LDE <T> &lista2) {
 
 template <typename T>
 void diferenca(LDE <T> lista1, LDE <T> lista2, LDE <T> &lista3) {
-    No <T> *aux1 = lista1.comeco;
-    No <T> *aux2 = lista2.comeco;
+    No <T> *aux = lista2.comeco;
 
     inicializarLDE(lista3);
     copiar(lista1, lista3);
 
-    while( aux1 != NULL && aux2 != NULL ){
-        if (aux1->info == aux2->info) {
-            retirarLDE(lista3, aux1->info);
-
-           }
-        aux1 = aux1->eloP;
-        aux2 = aux2->eloP;
-
+    while( aux != NULL ){
+        if (pesquisarLDE(lista1, aux->info) != NULL) {
+            retirarLDE(lista3, aux->info);
+        }
+        aux = aux->eloP;
     }
 }
 
+template <typename T>
+int comum(LDE <T> lista1, LDE <T> lista2) {
+    LDE <T> lista3;
+    inicializarLDE(lista3);
+
+    diferenca(lista1, lista2, lista3);
+
+    return (comprimento(lista1) - comprimento(lista3));
+}
 
 
 
@@ -272,6 +276,9 @@ int main(){
     inserirLDE(lista3, 'N');
     inserirLDE(lista3, 'A');
     inserirLDE(lista3, 'M');
+
+    cout << "A quantidade de letras em comum na lista 1 e 2 é: " << comum(lista1, lista2) << endl;
+    cout << "A quantidade de letras em comum na lista 1 e 3 é: " << comum(lista1, lista3) << endl;
 
 
     if (igual(lista1, lista2)) {
@@ -326,6 +333,9 @@ int main(){
     mostrarLDE(lista1);
 
     liberarLDE(lista1);
+    liberarLDE(lista2);
+    liberarLDE(lista3);
+    liberarLDE(lista4);
 
     cout << endl;
 }
